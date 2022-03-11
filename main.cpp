@@ -37,6 +37,8 @@ int main()
 	     "[r]ow row {1-9} \n"
 	     "[c]ol col {1-9} \n"
 	     "[sq]are x y {1-9} \n"
+	     "[v]alidate \n"
+	     "solve \n"
 	     "[h/?]elp \n"
 	     "e[x]it \n\n");
 
@@ -74,6 +76,16 @@ int main()
       int y; cin >> y;
       read9();
       sudoku.setSquare(x, y, buf9);
+    }
+
+    if (command == "validate" || command == "v")
+    {
+      sudoku.validate();
+    }
+
+    if (command == "solve")
+    {
+      sudoku.solve();
     }
     
     if (command == "exit" || command == "x")
