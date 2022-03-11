@@ -10,6 +10,9 @@ class Sudoku
   ~Sudoku();
   void setCellValue(int cellNumber, int cellValue);
   void setCellValue(int row, int column, int cellValue);
+  void setRow(int row, int vals[9]);
+  void setColumn(int col, int vals[9]);
+  void setSquare(int x, int y, int vals[9]);
   void print();
  private:
   SudokuCell cells[81];
