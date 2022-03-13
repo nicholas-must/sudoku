@@ -7,32 +7,29 @@ using namespace std;
 // Constructors
 SudokuCell::SudokuCell()
 {
-  this->value = 0;
+  this->digit = 0;
 }
 
-SudokuCell::SudokuCell(int value)
+SudokuCell::SudokuCell(int digit)
 {
-  this->value = SudokuCell::validate(value);
+  setDigit(digit);
 }
-
-// Destructor
-SudokuCell::~SudokuCell(){}
 
 // Static functions
-int SudokuCell::validate(int value)
+int SudokuCell::validate(int digit)
 {
-  if (value < 0 || value > 9) return 0;
-  return value;
+  if (digit < 0 || digit > 9) return 0;
+  return digit;
 }
 
 // Public functions
-int SudokuCell::getValue() { return this->value; }
-void SudokuCell::setValue(int value)
+int SudokuCell::getDigit() { return this->digit; }
+void SudokuCell::setDigit(int digit)
 {
-  this->value = SudokuCell::validate(value);
+  this->digit = SudokuCell::validate(digit);
 }
 
 void SudokuCell::print()
 {
-  cout << "Cell Value: " << this->value << endl;
+  cout << "Cell Digit: " << this->digit << endl;
 }

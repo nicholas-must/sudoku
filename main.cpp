@@ -33,6 +33,7 @@ int main()
 
     if (command == "help" || command == "h" || command == "?")
       printf("[p]rint \n"
+	     "[pp]rint \n"
 	     "[s]et row col value \n"
 	     "[r]ow row {1-9} \n"
 	     "[c]ol col {1-9} \n"
@@ -45,6 +46,9 @@ int main()
     if (command == "print" || command == "p")
       sudoku.print();
 
+    if (command == "pprint" || command == "pp")
+      sudoku.pprint();
+
     if (command == "set" || command == "s")
     {
       int row, col, val;
@@ -52,7 +56,7 @@ int main()
       cin >> col;
       cin >> val;
       //SudokuCell::validate(
-      sudoku.setCellValue(row, col, val);
+      sudoku.setCellDigit(row, col, val);
       printf("Set cell %d, %d to %d\n", row , col, val);
     }
 

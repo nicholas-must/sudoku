@@ -7,18 +7,18 @@ class SudokuCell
 {
  public:
   SudokuCell();
-  SudokuCell(int value);
-  ~SudokuCell();
+  SudokuCell(int digit);
   
-  static int validate(int value);
+  static int validate(int digit);
 
-  int getValue();
-  void setValue(int value);
+  int getDigit();
+  void setDigit(int digit);
   
   void print();
   
  private:
-  int value; // 0 is unknown
+  int digit; // 0 is unknown
+  // TODO: candidates
 };
 
 #endif // SUDOKU_CELL_H
