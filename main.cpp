@@ -40,6 +40,8 @@ int main()
 	     "[sq]are x y {1-9} \n"
 	     "[v]alidate \n"
 	     "solve \n"
+	     "save filename \n"
+	     "load filename \n"
 	     "[h/?]elp \n"
 	     "e[x]it \n\n");
 
@@ -55,7 +57,7 @@ int main()
       cin >> row;
       cin >> col;
       cin >> val;
-      //SudokuCell::validate(
+      // TODO: validate inputs
       sudoku.setCellDigit(row, col, val);
       printf("Set cell %d, %d to %d\n", row , col, val);
     }
@@ -91,7 +93,19 @@ int main()
     {
       sudoku.solve();
     }
-    
+
+    if (command == "save")
+    {
+      string fileName; cin >> fileName;
+      sudoku.saveFile(fileName);
+    }
+
+    if (command == "load")
+    {
+      string fileName; cin >> fileName;
+      sudoku.loadFile(fileName);
+    }
+
     if (command == "exit" || command == "x")
     {
       doSudoku = false;

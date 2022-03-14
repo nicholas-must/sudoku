@@ -3,6 +3,10 @@
 
 #include <string>
 
+class SudokuRow;
+class SudokuColumn;
+class SudokuSquare;
+
 class SudokuCell
 {
  public:
@@ -15,6 +19,10 @@ class SudokuCell
   void setDigit(int digit);
   
   void print();
+
+  SudokuRow *row;
+  SudokuColumn *column;
+  SudokuSquare *square;
   
  private:
   int digit; // 0 is unknown

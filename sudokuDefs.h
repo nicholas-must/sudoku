@@ -19,4 +19,9 @@ struct ScanContext
 
 typedef int(*ScanFunction)(ScanContext*);
 
+struct Int9
+{
+  int x[9];
+};
+
 #endif // SUDOKU_DEFS_H

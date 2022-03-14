@@ -4,10 +4,17 @@
 #include "sudokuCell.h"
 #include "sudokuSection.h"
 
+// Try this before moving to another file
+int validateBoard(ScanContext *context);
+int soleCandidate(ScanContext *context);
+
 class Sudoku
 {
  public:
   Sudoku();
+
+  int loadFile(string filename);
+  int saveFile(string filename);
   
   void setCellDigit(int cellIndex, int cellValue);
   void setCellDigit(int row, int column, int cellValue);
@@ -23,6 +30,7 @@ class Sudoku
 
   // Scanning and algorithms
   int forAllSections(ScanFunction func, void *data);
+  int forAllCells(ScanFunction func, void *data);
 
   bool validate();
   bool solve();
@@ -44,12 +52,6 @@ class Sudoku
 		       ScanFunction func,
 		       ScanContext *scanContext,
 		       int type);
-
-  int doValidate(Sudoku *pSudoku,
-		 int iteration,
-		 int row,
-		 int col,
-		 void *context);
 };
 
 #endif // SUDOKU_H

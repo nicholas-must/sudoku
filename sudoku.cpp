@@ -3,6 +3,8 @@
 #include "sudokuSection.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <cstdlib>
 
 using namespace std;
@@ -21,19 +23,54 @@ Sudoku::Sudoku()
       // Rows
       cell = getCell(sectionIndex, cellIndex);
       rows[sectionIndex].setCell(cellIndex, cell);
+      cell->row = rows + sectionIndex;
 	
       // Columns
       cell = getCell(cellIndex, sectionIndex);
       columns[sectionIndex].setCell(cellIndex, cell);
+      cell->column = columns + sectionIndex;
 
       // Squares
       cell = getCellBySquare(sectionIndex, cellIndex);
       squares[sectionIndex].setCell(cellIndex, cell);
+      cell->square = squares + sectionIndex;
     }
   }
 }
 
 // Public methods
+int Sudoku::loadFile(string filename)
+{
+  ifstream sudokuFile(filename);
+  
+  string line;
+  //stringstream stream;
+  int index = 0, digit = 0;
+  while (getline(sudokuFile, line))
+  {
+    cout << line << endl;
+    stringstream stream;
+    stream << line;
+    
+    while (1)
+    {
+      stream >> digit;
+      if (!stream)
+	break;
+      setCellDigit(index++, digit);
+      if (index >= 81) return 0; // Too many digits
+    }
+  }
+
+  sudokuFile.close();
+  return 0;
+}
+
+int Sudoku::saveFile(string filename)
+{
+  return 0;
+}
+
 void Sudoku::setCellDigit(int cellNumber, int cellValue)
 {
   cells[cellNumber].setDigit(cellValue);
@@ -44,6 +81,7 @@ void Sudoku::setCellDigit(int row, int column, int cellValue)
   setCellDigit((row - 1) * 9 + (column - 1), cellValue);
 }
 
+// TODO: Use sections for these
 void Sudoku::setRow(int row, int vals[9])
 {
   for (int i = 0; i < 9; ++i)
@@ -75,6 +113,7 @@ int Sudoku::getCellDigit(int row, int column)
   return getCellDigit((row - 1) * 9 + (column - 1));
 }
 
+// TODO: More space, for candidate rendering
 void Sudoku::print()
 {
   for (int i = 0; i < 9; ++i)
@@ -119,73 +158,46 @@ int Sudoku::forAllSections(ScanFunction func, void *data)
   return 0;
 }
 
+int Sudoku::forAllCells(ScanFunction func, void *data)
+{
+  ScanContext context = {0};
+  context.type = 4; // for cells
+  context.section = 0; // not relevant
+  context.major = 1;
+  context.data = data;
+
+  for (int index = 0; index < 81; ++index)
+  {
+    context.minor = index + 1;
+    context.cell = cells + index;
+    func(&context);
+  }
+  
+  return 0;
+}
+
 bool Sudoku::validate()
 {
-  bool valid = true;
-  // Check rows
-  for (int row = 1; row <= 9; ++row)
-  {
-    // Fill buffer with totals; all should add to 9
-    std::fill(buf9, buf9+9, 0);
-    for (int col = 1; col <= 9; ++col)
-    {
-      int index = getCellDigit(row, col) - 1;
-      buf9[index]++;
-    }
-    // Check row digit counts
-    for (int digit = 1; digit <= 9; ++digit)
-    {
-      int digitCount = buf9[digit - 1];
-      if (digitCount != 1)
-      {
-	printf("There are %d %d's in row %d\n",
-	       digitCount,
-	       digit,
-	       row);
-      }
-    }
-  }
-
-  // Check columns
-  // reduce code triplication first
-
-  // Check squares
-  // reduce code triplication first
-
-  return valid;
+  Int9 context = {0};
+  forAllSections(validateBoard, (void*)&context);
+  
+  return true;
 }
 
 bool Sudoku::solve()
 {
   // In theory, this should be all
-  int sum;
-  forAllSections(sumGroup, (void*)&sum);
+  //int sum;
+  //forAllSections(sumGroup, (void*)&sum);
 
-  // Previous code:
-  /*SumContext sumContext = {0, 0, 0};
-  sumContext.type = 0;
-  sumContext.majorIteration = 0;
-  scan_rows(pSudoku, doSum, &sumContext);
-  sumContext.type = 1;
-  sumContext.majorIteration = 0;
-  scan_columns(pSudoku, doSum, &sumContext);
-  sumContext.type = 2;
-  sumContext.majorIteration = 0;
-  scan_squares(pSudoku, doSum, &sumContext);*/
-  
+  // Sole candidate testing
+  forAllCells(soleCandidate, 0);
+
   return false;
 }
 
 int Sudoku::sumGroup(ScanContext *context)
 {
-  /*printf("type=%d,major=%d,minor=%d,cell=%d,sum=%d\n",
-	 context->type,
-	 context->major,
-	 context->minor,
-	 context->cell->getDigit(),
-	 *(int*)context->data);*/
-  // Should have used gdb for this
-  
   int *sum = (int*)context->data;
   // First
   if (context->minor == 1)
@@ -206,6 +218,83 @@ int Sudoku::sumGroup(ScanContext *context)
     if (*sum > 45) return 1; // Invalid sum
   }
   return 0;
+}
+
+// Non-member function!
+int validateBoard(ScanContext *context)
+{
+  // Unpack context
+  Int9 *buf9 = (Int9*)context->data;
+  
+  // First
+  if (context->minor == 1)
+    std::fill(buf9->x, buf9->x + 9, 0);
+  
+  // Process
+  int digit = context->cell->getDigit();
+  if (digit)
+    ++(buf9->x[digit - 1]);
+
+  // Last
+  if (context->minor == 9)
+  {
+    for (int i = 0; i < 9; ++i)
+    {
+      if (buf9->x[i] > 1)
+      {
+	printf("There are %d %d's in %s #%d.\n",
+		buf9->x[i],
+		i + 1,
+		context->section->getName().c_str(),
+		context->major);
+	return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+int soleCandidate(ScanContext *context)
+{
+  // Don't process known digits
+  if (0 != context->cell->getDigit()) return 0;
+  
+  int candidates[9]; // 1 is a cand., 0 is not
+  std::fill(candidates, candidates+9, 1);
+
+  // Calculate cell candidates - re-use this later..
+  for (int index = 0; index < 9; ++index)
+  {
+    // TODO: Fix design here
+    int digit = context->cell->row->getCell(index)->getDigit();
+    if (digit) candidates[digit - 1] = 0;
+    digit = context->cell->column->getCell(index)->getDigit();
+    if (digit) candidates[digit - 1] = 0;
+    digit = context->cell->square->getCell(index)->getDigit();
+    if (digit) candidates[digit - 1] = 0;
+  }
+
+  // Check for sole candidates
+  int numCandidates = 0;
+  int soleCandidate = 0;
+  for (int i = 0; i < 9; ++i)
+  {
+    if (candidates[i])
+    {
+      ++numCandidates;
+      soleCandidate = i + 1;
+    }
+  }
+
+  if (numCandidates < 9)
+    printf("cell %d has %d candidates\n",
+	   context->minor, numCandidates);
+    
+  if (1 == numCandidates)
+    context->cell->setDigit(soleCandidate);
+
+  return 0; // No reason to not continue algorithm
 }
 
 // Private member functions
@@ -243,89 +332,5 @@ int Sudoku::doForAllSections(SudokuSection (*sections)[9],
     context->section->forAll(func, context);
   }
   // TODO: Return properly
-  return 0;
-}
-
-int Sudoku::doValidate(Sudoku *pSudoku,
-		       int iteration,
-		       int row,
-		       int col,
-		       void *context)
-{
-  // pSudoku should be this
-  // context should be void tbh
-  ScanContext *sumContext = (ScanContext*)context;
-
-  if (0 == iteration)
-  {
-    // zerocontext
-    std::fill(buf9, buf9+9, 0);
-  }
-
-  // do calc
-  int index = getCellDigit(row, col) - 1;
-  ++buf9[index];
-
-  if (8 == iteration)
-  {
-    // group verdict
-    for (int i = 0; i < 9; ++i)
-    {
-      string type =
-      sumContext->type == 0 ? "ROW" :
-      sumContext->type == 1 ? "COLUMN" :
-      sumContext->type == 2 ? "SQUARE" : "UNKNOWN";
-      
-      if (buf9[i] != 1){
-	printf("There are %d %d's in %s #%d\n",
-	       buf9[i],
-	       i+1,
-	       type.c_str(),
-	       sumContext->major);
-	return 1; // bail on invalid
-      }
-    }
-  }
-  return 0;
-}
-
-int doSumOld(Sudoku *pSudoku,
-	     int iteration,
-	     int row,
-	     int column,
-	     void *context)
-{
-  // This is executed nine times
-  // Given row and column of scan function
-  // and a context passed from sum group
-  ScanContext *sumContext = (ScanContext*)context;
-
-  // Wipe on the first iteration
-  if (0 == iteration)
-  //fill(sumContext->buf9, sumContext->buf9+9, 0);
-    sumContext->data = 0;
-
-  // Tally up digits in section
-  //int index = getCellDigit(row, column) - 1;
-  //sumContext->buf9[index]++;
-
-  // Sum up digits
-  *(int*)(sumContext->data) += pSudoku->getCellDigit(row, column);
-
-  // Validate on last iteration
-  if (8 == iteration)
-  {
-    string type =
-      sumContext->type == 0 ? "ROW" :
-      sumContext->type == 1 ? "COLUMN" :
-      sumContext->type == 2 ? "SQUARE" : "UNKNOWN";
-    
-    printf("The sum of %s#%d is %d\n",
-	   type.c_str(),
-	   ++sumContext->major,
-	   *(int*)sumContext->data);
-
-    if (*(int*)sumContext->data > 45) return 1; // bail on invalid
-  }
   return 0;
 }
