@@ -27,7 +27,7 @@ int main()
 #ifdef DEBUG
   // Debugging command
   sudoku.loadFile("easy.sdk");
-  sudoku.solve();
+  //sudoku.solve();
 #endif // DEBUG
 
   // Game loop

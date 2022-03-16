@@ -320,7 +320,7 @@ int validateBoard(ScanContext *context)
 }
 
 // TODO: Use lambda
-static int cellSoleCandidates(ScanContext *context)
+static int calculateCellCandidates(ScanContext *context)
 {
   // Remove this cell's digit as a candidate
   SudokuCell *candidateCell = (SudokuCell*)context->data;
@@ -346,17 +346,22 @@ int soleCandidateScan(ScanContext *context)
 
   context->cell->initiateCandidates();
 
+  // Print cells
+  size_t initialCandidates = context->cell->candidates.size();
+  printf("cell %d has %zu candidates\n",
+	 context->minor, initialCandidates);
+
   // Process candidates by cross-hatching, if required
-  bool calculateCandidates = *(bool*)context->data;
+  bool calculateCandidates = true;
+  Sudoku *pSudoku = (Sudoku*)context->data;
   if (calculateCandidates)
   {
-    Sudoku *pSudoku = (Sudoku*)context->data;
-    pSudoku->forAllCellSections(context->cell, cellSoleCandidates, context->cell, 0);
+    pSudoku->forAllCellSections(context->cell, calculateCellCandidates, context->cell, 0);
   }
 
   // Print cells with less than 9 candidates
-  if (context->cell->candidates.size() < 9)
-    printf("cell %d has %zu candidates\n",
+  if (context->cell->candidates.size() < initialCandidates)
+    printf("cell %d now has %zu candidates\n",
 	   context->minor, context->cell->candidates.size());
 
   // Solve sole candidate cells
@@ -364,6 +369,17 @@ int soleCandidateScan(ScanContext *context)
   {
     int soleCandidate = *(context->cell->candidates.begin());
     context->cell->setDigit(soleCandidate);
+    printf("solving cell %d with %d\n",
+	   context->minor, context->cell->getDigit());
+    // Recursive solve
+    if (calculateCandidates)
+    {
+      printf("recursive solve\n");
+      pSudoku->forAllCellSections(context->cell,
+				  soleCandidateScan,
+				  context->data, // pSudoku
+				  0);
+    }
   }
 
   return 0; // No reason to not continue algorithm
