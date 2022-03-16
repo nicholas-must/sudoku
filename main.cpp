@@ -24,6 +24,12 @@ int main()
   Sudoku sudoku;
   sudoku.print();
 
+#ifdef DEBUG
+  // Debugging command
+  sudoku.loadFile("easy.sdk");
+  sudoku.solve();
+#endif // DEBUG
+
   // Game loop
   bool doSudoku = true;
   while (doSudoku)
@@ -35,6 +41,7 @@ int main()
       printf("[p]rint \n"
 	     "[pp]rint \n"
 	     "[s]et row col value \n"
+	     "can row col \n"
 	     "[r]ow row {1-9} \n"
 	     "[c]ol col {1-9} \n"
 	     "[sq]are x y {1-9} \n"
@@ -60,6 +67,15 @@ int main()
       // TODO: validate inputs
       sudoku.setCellDigit(row, col, val);
       printf("Set cell %d, %d to %d\n", row , col, val);
+    }
+
+    if (command == "can")
+    {
+      int row, col;
+      cin >> row;
+      cin >> col;
+      // TODO: validate inputs
+      sudoku.printCellCandidates(row, col);
     }
 
     if (command == "row" || command == "r")

@@ -30,6 +30,10 @@ class SudokuSection
   void setCell(int index, SudokuCell *cell);
   void print();
 
+  // TODO: implement this properly
+  SudokuCell **begin();
+  SudokuCell **end();
+
   bool forAll(ScanFunction func, ScanContext *context);
 
  private:

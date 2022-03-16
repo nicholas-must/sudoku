@@ -1,6 +1,14 @@
 #ifndef SUDOKU_DEFS_H
 #define SUDOKU_DEFS_H
 
+//#define DEBUG 1
+
+#ifdef DEBUG
+#define DLOG(...) printf(__VA_ARGS__)
+#else
+#define DLOG(...) 
+#endif // DEBUG
+
 // Forward declarations
 class SudokuSection;
 class SudokuCell;

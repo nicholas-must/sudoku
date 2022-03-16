@@ -6,7 +6,7 @@
 
 // Try this before moving to another file
 int validateBoard(ScanContext *context);
-int soleCandidate(ScanContext *context);
+int soleCandidateScan(ScanContext *context);
 
 class Sudoku
 {
@@ -24,13 +24,17 @@ class Sudoku
 
   int getCellDigit(int cellIndex);
   int getCellDigit(int row, int column);
-  
+
   void print();
   void pprint();
+
+  void printCellCandidates(int cellIndex);
+  void printCellCandidates(int row, int col);
 
   // Scanning and algorithms
   int forAllSections(ScanFunction func, void *data);
   int forAllCells(ScanFunction func, void *data);
+  int forAllCellSections(SudokuCell *cell, ScanFunction func, void *data, bool includeSelf);
 
   bool validate();
   bool solve();

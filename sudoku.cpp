@@ -7,6 +7,9 @@
 #include <sstream>
 #include <cstdlib>
 
+#include <array>
+#include <algorithm>
+
 using namespace std;
 
 // Constructor
@@ -48,7 +51,6 @@ int Sudoku::loadFile(string filename)
   int index = 0, digit = 0;
   while (getline(sudokuFile, line))
   {
-    cout << line << endl;
     stringstream stream;
     stream << line;
     
@@ -68,6 +70,7 @@ int Sudoku::loadFile(string filename)
 
 int Sudoku::saveFile(string filename)
 {
+  // TODO: saveFile
   return 0;
 }
 
@@ -119,7 +122,8 @@ void Sudoku::print()
   for (int i = 0; i < 9; ++i)
   {
     if (0 == (i) % 3)
-      cout << "-------------" << endl;
+      cout << "-------------------------------" << endl;
+    
     
     // Print a row of numbers
     for (int j = 0; j < 9; ++j)
@@ -127,11 +131,13 @@ void Sudoku::print()
       if (0 == (j) % 3)
 	cout << "|";
       int offset = 9 * i + j;
-      cout << cells[offset].getDigit();
+      int digit = cells[offset].getDigit();
+      printf(" %c ", (digit == 0 ? ' ' : '0' + digit));
+      //cout << " " << (digit == 0 ? " " : ('0'+digit)) << " ";
     }
     cout << "|" << endl;
   }
-  cout << "-------------" << endl;
+  cout << "-------------------------------" << endl;
 }
 
 void Sudoku::pprint()
@@ -143,6 +149,22 @@ void Sudoku::pprint()
     columns[i].print();
     squares[i].print();
   }
+}
+
+void Sudoku::printCellCandidates(int cellIndex)
+{
+  SudokuCell *cell = getCell(cellIndex);
+  if (cell->getDigit())
+    printf("cell #%d is %d\n", cellIndex, cell->getDigit());
+  else
+    printf("cell #%d has %zu candidates\n",
+	   cellIndex,
+	   cell->candidates.size());
+}
+
+void Sudoku::printCellCandidates(int row, int col)
+{
+  printCellCandidates(9 * (row - 1) + (col - 1));
 }
 
 int Sudoku::forAllSections(ScanFunction func, void *data)
@@ -176,6 +198,47 @@ int Sudoku::forAllCells(ScanFunction func, void *data)
   return 0;
 }
 
+int Sudoku::forAllCellSections(SudokuCell *cell, ScanFunction func, void *data, bool includeSelf)
+{
+  //DLOG("facs\n");
+  // Populate an array with the cells to iterate over
+  std::array<SudokuCell*, 27> cells;
+  std::fill(cells.begin(), cells.end(), (SudokuCell*)0);
+  /*std::copy(cell->row->getCells().set,
+	    cell->row->getCells().set+9,
+	    cells.end());
+  std::copy(cell->column->begin(), cell->column->end(), cells.end());
+  std::copy(cell->square->begin(), cell->square->end(), cells.end());
+  */
+
+  // TODO: Fix
+  for (int i=0; i<9; ++i) {cells[i] = cell->row->getCell(i);}
+  for (int i=0; i<9; ++i) {cells[9+i] = cell->column->getCell(i);}
+  for (int i=0; i<9; ++i) {cells[18+i] = cell->square->getCell(i);}
+
+  // Then execute func for all cells
+  ScanContext context = {0};
+  context.type = 5;
+  context.data = data;
+  std::for_each(cells.begin(),
+		cells.end(),
+		[&](SudokuCell* myCell){
+		  if (!myCell) return; // Some null entries
+		  //DLOG("scanning %p\n", myCell);
+		  // Only include self once
+		  if (myCell == cell) {
+		    if (!includeSelf) return;
+		    includeSelf = false;
+		  }
+		  // Populate ScanContext
+		  context.cell = myCell;
+		  func(&context);
+		});
+  // TODO: return properly
+  //DLOG("facs]\n");
+  return 0;
+}
+
 bool Sudoku::validate()
 {
   Int9 context = {0};
@@ -191,7 +254,8 @@ bool Sudoku::solve()
   //forAllSections(sumGroup, (void*)&sum);
 
   // Sole candidate testing
-  forAllCells(soleCandidate, 0);
+  forAllCells(soleCandidateScan, this);
+  print();
 
   return false;
 }
@@ -255,44 +319,52 @@ int validateBoard(ScanContext *context)
   return 0;
 }
 
-int soleCandidate(ScanContext *context)
+// TODO: Use lambda
+static int cellSoleCandidates(ScanContext *context)
+{
+  // Remove this cell's digit as a candidate
+  SudokuCell *candidateCell = (SudokuCell*)context->data;
+  int digit = context->cell->getDigit();
+  
+  // TODO: Consider replacing with a set function to remove a set of candidates
+  if (digit)
+  {
+    if (candidateCell->candidates.count(digit))
+    {
+      DLOG("removing %d as candidate\n", digit);
+      // Not needed here, but can be re-used here
+      candidateCell->candidates.erase(digit);
+    }
+  }
+  return 0;
+}
+
+int soleCandidateScan(ScanContext *context)
 {
   // Don't process known digits
   if (0 != context->cell->getDigit()) return 0;
-  
-  int candidates[9]; // 1 is a cand., 0 is not
-  std::fill(candidates, candidates+9, 1);
 
-  // Calculate cell candidates - re-use this later..
-  for (int index = 0; index < 9; ++index)
+  context->cell->initiateCandidates();
+
+  // Process candidates by cross-hatching, if required
+  bool calculateCandidates = *(bool*)context->data;
+  if (calculateCandidates)
   {
-    // TODO: Fix design here
-    int digit = context->cell->row->getCell(index)->getDigit();
-    if (digit) candidates[digit - 1] = 0;
-    digit = context->cell->column->getCell(index)->getDigit();
-    if (digit) candidates[digit - 1] = 0;
-    digit = context->cell->square->getCell(index)->getDigit();
-    if (digit) candidates[digit - 1] = 0;
+    Sudoku *pSudoku = (Sudoku*)context->data;
+    pSudoku->forAllCellSections(context->cell, cellSoleCandidates, context->cell, 0);
   }
 
-  // Check for sole candidates
-  int numCandidates = 0;
-  int soleCandidate = 0;
-  for (int i = 0; i < 9; ++i)
-  {
-    if (candidates[i])
-    {
-      ++numCandidates;
-      soleCandidate = i + 1;
-    }
-  }
+  // Print cells with less than 9 candidates
+  if (context->cell->candidates.size() < 9)
+    printf("cell %d has %zu candidates\n",
+	   context->minor, context->cell->candidates.size());
 
-  if (numCandidates < 9)
-    printf("cell %d has %d candidates\n",
-	   context->minor, numCandidates);
-    
-  if (1 == numCandidates)
+  // Solve sole candidate cells
+  if (1 == context->cell->candidates.size())
+  {
+    int soleCandidate = *(context->cell->candidates.begin());
     context->cell->setDigit(soleCandidate);
+  }
 
   return 0; // No reason to not continue algorithm
 }

@@ -40,6 +40,10 @@ void SudokuSection::print()
   cout << endl;
 }
 
+// TODO: Implement this properly
+SudokuCell **SudokuSection::begin() {return &(cells.set[0]);}
+SudokuCell **SudokuSection::end() {return &(cells.set[9]);}
+
 bool SudokuSection::forAll(ScanFunction func,
 			   ScanContext *context)
 {
