@@ -7,6 +7,7 @@
 // Try this before moving to another file
 int validateBoard(ScanContext *context);
 int soleCandidateScan(ScanContext *context);
+int nakedSubsets(ScanContext *context);
 
 class Sudoku
 {

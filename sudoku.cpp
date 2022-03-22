@@ -142,13 +142,58 @@ void Sudoku::print()
 
 void Sudoku::pprint()
 {
-  // debug function to check the sections are working
+  // debug function to visualise candidates
   for (int i = 0; i < 9; ++i)
   {
-    rows[i].print();
-    columns[i].print();
-    squares[i].print();
+    // ROW START
+    if (0 == (i) % 3)
+    {
+      cout << "|===========================";
+      cout << "============================";
+      cout << "============================|" << endl;
+    }
+    cout << "|                           ";
+    cout << "|                           ";
+    cout << "|                           |" << endl;
+    // Each row of digits will be done three times for
+    // candidate matrix
+    for (int k = 0; k < 3; k++)
+    {
+      // CAND ROW START
+      for (int j = 0; j < 9; ++j)  
+      {
+	// COLUMN START
+	int cellIndex = 9 * i + j;
+	int digit = cells[cellIndex].getDigit();
+	char candidateRow[3];
+	// Generate a 3-candidate row of characters for this cell
+	for (int c = 0; c < 3; ++c)
+	{
+	  int candidateDigit = 1 + 3 * k + c;
+	  bool isCandidate =
+	    cells[cellIndex].candidates.count(candidateDigit);
+	  candidateRow[c] = (isCandidate? '0' + candidateDigit :
+			     ' ');
+	}
+	
+	if (0 == (j) % 3)
+	  cout << "|"; // Left cell wall
+	
+	printf("  %c %c %c  ",
+	       candidateRow[0],
+	       candidateRow[1],
+	       candidateRow[2]);
+	// COLUMN END
+      }
+      cout << "|" << endl;
+      //cout << "-------------------------------" << endl;
+      // CAND ROW END
+    }
+    // ROW END
   }
+  cout << "|===========================";
+  cout << "============================";
+  cout << "============================|" << endl;
 }
 
 void Sudoku::printCellCandidates(int cellIndex)
@@ -255,6 +300,7 @@ bool Sudoku::solve()
 
   // Sole candidate testing
   forAllCells(soleCandidateScan, this);
+  forAllSections(nakedSubsets, 0);
   print();
 
   return false;
@@ -383,6 +429,28 @@ int soleCandidateScan(ScanContext *context)
   }
 
   return 0; // No reason to not continue algorithm
+}
+
+int nakedSubsets(ScanContext *context)
+{
+  // For all sections
+  std::set<std::set<int>> *setContext =
+    (std::set<std::set<int>>*)context->data;
+
+  // Section start - clear candidates set
+  if (context->minor == 1)
+    setContext->clear();
+  
+  // Add (pre-calculated) cell candidates
+  setContext->insert(context->cell->candidates);
+
+  // Section end - search for subsets
+  if (context->minor == 9)
+  {
+    // Are there two sets of two?
+    
+  }
+  return 0;
 }
 
 // Private member functions

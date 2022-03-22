@@ -22,12 +22,13 @@ int main()
 
   // Game setup
   Sudoku sudoku;
-  sudoku.print();
+  // sudoku.print();
 
 #ifdef DEBUG
   // Debugging command
-  sudoku.loadFile("easy.sdk");
-  //sudoku.solve();
+  sudoku.loadFile("expert.sdk");
+  sudoku.solve();
+  sudoku.pprint();
 #endif // DEBUG
 
   // Game loop
