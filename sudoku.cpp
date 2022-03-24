@@ -1,6 +1,7 @@
 #include "sudoku.h"
 
 #include "sudokuSection.h"
+#include "algorithm.h"
 
 #include <iostream>
 #include <fstream>
@@ -294,13 +295,16 @@ bool Sudoku::validate()
 
 bool Sudoku::solve()
 {
-  // In theory, this should be all
-  //int sum;
-  //forAllSections(sumGroup, (void*)&sum);
-
   // Sole candidate testing
   forAllCells(soleCandidateScan, this);
-  forAllSections(nakedSubsets, 0);
+
+  // Search for subsets
+  std::set<std::set<int>> setContext;
+  // TODO: Find a way around this use of void*
+  cout << "Naked subsets start" << endl;
+  forAllSections(nakedSubsets, (void*)&setContext);
+  cout << "Naked subsets end" << endl;
+  
   print();
 
   return false;
@@ -394,8 +398,8 @@ int soleCandidateScan(ScanContext *context)
 
   // Print cells
   size_t initialCandidates = context->cell->candidates.size();
-  printf("cell %d has %zu candidates\n",
-	 context->minor, initialCandidates);
+  //printf("cell %d has %zu candidates\n",
+  //	 context->minor, initialCandidates);
 
   // Process candidates by cross-hatching, if required
   bool calculateCandidates = true;
@@ -406,9 +410,9 @@ int soleCandidateScan(ScanContext *context)
   }
 
   // Print cells with less than 9 candidates
-  if (context->cell->candidates.size() < initialCandidates)
-    printf("cell %d now has %zu candidates\n",
-	   context->minor, context->cell->candidates.size());
+  //if (context->cell->candidates.size() < initialCandidates)
+  //printf("cell %d now has %zu candidates\n",
+  //	   context->minor, context->cell->candidates.size());
 
   // Solve sole candidate cells
   if (1 == context->cell->candidates.size())
@@ -447,8 +451,18 @@ int nakedSubsets(ScanContext *context)
   // Section end - search for subsets
   if (context->minor == 9)
   {
-    // Are there two sets of two?
+    // Create a set from the intersection of all cell candidates
+    SetInt candidateSet;
+    combineSets(setContext, &candidateSet);
+    print_set(candidateSet);
     
+    // Generate a reduced powerset of subsets with 2-4 digits
+    // Singles not required, and groups of 5+ should have complementary
+    // groups
+    SetSetInt power_s = powerSet(candidateSet);
+    print_set(power_s);
+
+    // Count instances of each subset; count=set.size indicates a subset
   }
   return 0;
 }

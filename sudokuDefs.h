@@ -1,6 +1,8 @@
 #ifndef SUDOKU_DEFS_H
 #define SUDOKU_DEFS_H
 
+#include <set>
+
 //#define DEBUG 1
 
 #ifdef DEBUG
@@ -25,7 +27,11 @@ struct ScanContext
   void *data;
 };
 
+// Typedefs
 typedef int(*ScanFunction)(ScanContext*);
+
+typedef std::set<int> SetInt;
+typedef std::set<SetInt> SetSetInt;
 
 struct Int9
 {
